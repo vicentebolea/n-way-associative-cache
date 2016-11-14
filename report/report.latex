@@ -1,0 +1,99 @@
+\documentclass{article}
+\usepackage{times}
+\usepackage{graphicx}
+
+\begin{document}
+
+\title{Computer Organization: Programming Assignment \#2}
+\author{Vicente Adolfo Bolea S\'anchez}
+\date{\today}
+\maketitle
+
+\begin{abstract}
+
+In this assignment, I implemented a n-ways associative cache using C programming language. The cache data structure is 
+a dynamic allocated array of blocks. The cache supports \textit{LRU} eviction and different levels of associativity, block sizes and 
+cache sizes.
+
+\end{abstract}
+
+\section*{Approach}
+I structured the source code into six different functions: four of them implement the low-level logic
+while the remaining of them are dependent on those four \textit{low-level()} functions. Both \textit{index\_of\_addr()} 
+and \textit{tag\_of\_addr()} computes the respective index and tag of the given virtual address.
+
+\textit{cache\_access()} calls \textit{index\_of\_addr()} and \textit{tag\_of\_addr()} and with the computed tag and index
+call \textit{insert\_block()} with those two parameters. \textit{insert\_block()} will then try to find the given block in
+the cache (using \textit{get\_block()}) and in case that it does not exist it will check if the corresponding set in the cache is already full (using \textit{is\_full()}). 
+In case the it is not full it will just locate that block in that free slot. Alternatively, if it is full it will evict
+the LRU element in that set(using \textit{evict\_block()}). After each insertion in each set we would increment the time attribute 
+of each block in that set using \textit{increment\_all()}.
+\\
+There are two parameters which can be adjusted in compile time: \textit{WORD\_SIZE} by default 32bits in MIPS, the size of a word; 
+\textit{WORD\_WIDTH} by default 0, value 0 assumes that the virtual addresses specify a whole 32bits word. Normally, if we want
+to access an specific byte of the block we would change \textit{WORD\_WIDTH} to 2.
+
+The source code is free of memory errors and leaks, it passed valgrind extensive memory test.
+
+\section*{Rationale}
+
+The architecture of the logic was developed using a \textit{top-bottom} approach. Specifically, in a \textit{rolling-wave} manner, this is, at first
+I wrote the high level functions such as \textit{cache\_access()} and \textit{insert\_block()}. After that, I implemented the rest of 
+the \textit{low\_level} functions. Once the source code had some consistency I attempted it to compile it and debug it. Later, I refactored the 
+code and repeated the same compiling and debuging cycle. 
+
+\section*{Experiments}
+For the experiments I create a small bash script called launcher which launch and filter the output of cache\_sim.
+
+\subsection{Cache capacity vs. cache misses}
+In this setup we will measure the cache misses using the following cache capacities: 
+1KB, 2KB, 4KB, 8KB, 16KB, 32KB. The associativity is 1 and the block size is 32 bytes.
+\\
+\includegraphics[scale=0.6]{chart3}
+
+\subsection{Cache associativity vs. cache misses}
+In this setup we will measure the cache misses using the following set associativies: 
+1, 2, 4, 8, 16. The cache size is 8KB and the block size is 32 bytes.
+\\
+\includegraphics[scale=0.6]{chart2}
+
+\subsection{Cache block size vs. cache misses}
+In this setup we will measure the cache misses using the following block sizes:
+8B, 16B, 32B, 64B, 128B. The cache size is 8KB and the associativity is 1.
+\\
+\includegraphics[scale=0.6]{chart1}
+
+\section*{Conclusion}
+
+After analizing those three experiments I conclude that increasing associativity leads to an higher increase in cache hits compared to
+increasing the block size or the number of sets (cache size). One of the possible explanations for the poor performance when increasing the 
+cache size is that the given address were relatively near to each other (high spacial locality). 
+\\ \\
+Due to that high spacial locality increasing the associativity or block size allows the cache to allocate more nearby addresses. 
+However, if we just increase the block size the cache would easily populate without evicting not frequently or recently used elements. 
+Thus, increasing associativity would have a similar effect, however, it will evict those blocks which are not frequently or 
+recently used dramatically increasing the performance of the cache.
+
+\section*{Tools and libraries}
+
+\begin{itemize}
+  \item \texttt{assert.h} library to keep the invariant in some functions.
+  \item \texttt{stdbool.h} to enable bool types.
+  \item \texttt{GNU toolchain: gdb, gcc, and valgrind} for compiling, debuging and memory tests.
+  \item \texttt{Bash shell} to create the launcher script.
+  \item \texttt{Google spreadsheet} for the charts.
+  \item \texttt{Latex} to create this report.
+  \item \texttt{Vim} to edit all the source codes.
+\end{itemize}
+
+\section*{Changes from the skeleton code}
+
+\begin{verbatim}
+
+ diff cache_sim.c ../pa/cache_sim.c | diffstat
+ unknown |  244 +++++++++++++++++++++++++++++++++++++++++++++----
+ 1 file changed, 191 insertions(+), 53 deletions(-)
+
+\end{verbatim}
+
+\end{document}
